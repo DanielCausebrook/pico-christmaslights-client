@@ -1,5 +1,7 @@
 import colorsys
 
+from palette import Palette
+
 
 def rgb_to_bytes(rgb):
     (r, g, b) = rgb
@@ -64,21 +66,23 @@ class LightPattern:
             raise "Blue must be in range [0, 1]"
         self.pixels[pixel] = (r, g, b)
 
-    def main_loop(self, t):
+    def main_loop(self, t: float, palette: Palette):
         """
+        :param Palette palette:
         :param float t:
         """
         if self.last_t is None:
-            self.do_main_loop(t, 0)
+            self.do_main_loop(t, 0, palette)
             self.last_t = t
         elif self.last_t == t:
             pass
         else:
-            self.do_main_loop(t, t - self.last_t)
+            self.do_main_loop(t, t - self.last_t, palette)
             self.last_t = t
 
-    def do_main_loop(self, t, delta_t):
+    def do_main_loop(self, t, delta_t, palette: Palette):
         """
+        :param Palette palette:
         :param float t:
         :param float delta_t:
         """

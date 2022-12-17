@@ -4,8 +4,10 @@ import opensimplex
 import pygame
 import pygame.freetype
 
+from palette import Palette
 from patterns.bouncing_blocks import BouncingBlocksPattern
-from patterns.gentle_blue_with_rainbows import GentleBlueWithRainbowsPattern
+from patterns.gentle_2tone import Gentle2TonePattern
+from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
 from hybrid_pattern import HybridPattern
 from pico_client import *
 from mathfun import rgb_to_bytes
@@ -13,19 +15,22 @@ from mathfun import rgb_to_bytes
 num_pixels = 200
 
 bouncing_blocks_pattern = BouncingBlocksPattern(num_pixels)
-gentle_pattern = GentleBlueWithRainbowsPattern(num_pixels)
-hybrid_test = HybridPattern(num_pixels, [bouncing_blocks_pattern, gentle_pattern])
-# for p in range(num_pixels):
-#     p_prop = p/num_pixels
-#     hybrid_test.set_pixel_mix(p, [p_prop, 1-p_prop])
-hybrid_test.set_mix([0.5, 0.5])
+gentle_with_rainbows_pattern = GentleWithRainbowsPattern(num_pixels)
+# hybrid_test = HybridPattern(num_pixels, [bouncing_blocks_pattern, gentle_with_rainbows_pattern])
+# # for p in range(num_pixels):
+# #     p_prop = p/num_pixels
+# #     hybrid_test.set_pixel_mix(p, [p_prop, 1-p_prop])
+# hybrid_test.set_mix([0.5, 0.5])
 
 patterns = [
     bouncing_blocks_pattern,
-    gentle_pattern,
-    hybrid_test
+    gentle_with_rainbows_pattern,
+    # hybrid_test,
+    Gentle2TonePattern(num_pixels),
 ]
 curr_pattern_index = 2
+
+palette = Palette()
 
 brightness_modifier = 1
 
@@ -97,7 +102,7 @@ while running:
                 draw_pattern_buttons()
 
     t = time.time()
-    patterns[curr_pattern_index].main_loop(t - start_time)
+    patterns[curr_pattern_index].main_loop(t - start_time, palette)
 
     frame = patterns[curr_pattern_index].get_frame()
 

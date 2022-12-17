@@ -24,10 +24,10 @@ class HybridPattern(LightPattern):
     def set_pixel_mix(self, pixel, mix):
         self.pixel_mixes[pixel] = mix
 
-    def do_main_loop(self, t, delta_t):
+    def do_main_loop(self, t, delta_t, palette):
         frames = []
         for pattern_index in range(len(self.patterns)):
-            self.patterns[pattern_index].main_loop(t)
+            self.patterns[pattern_index].main_loop(t, palette)
             frames.append(self.patterns[pattern_index].get_frame())
 
         for pixel in range(self.num_pixels):
