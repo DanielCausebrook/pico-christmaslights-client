@@ -1,5 +1,9 @@
 import colorsys
+import select
 import socket
+import threading
+from mathfun import rgb_to_bytes
+
 import numpy as np
 
 remote_host = "192.168.1.135"
@@ -7,17 +11,9 @@ remote_tcp_port = 4242
 remote_udp_port = 4243
 
 
-def rgb_to_bytes(rgb):
-    (r, g, b) = rgb
-    return round(r * 255), round(g * 255), round(b * 255)
-
-
 class PicoNeopixel:
-    """demonstration class only
-      - coded for clarity, not efficiency
-    """
 
-    def __init__(self, host_ip, num_pixels):
+    def __init__(self, host_ip: str, num_pixels: int):
         """
         :param string host_ip: The IP address of the lights.
         :param int num_pixels: The number of LEDs in the light string.
@@ -32,7 +28,21 @@ class PicoNeopixel:
         # Connect to the remote host and port
         self.sock.connect((host_ip, remote_tcp_port))
 
+        self.connected = True
         print("Connected")
+
+        def ping_responder(sock_tcp: socket.socket) -> None:
+            while self.connected:
+                readable, writable, exceptional = select.select([sock_tcp], [], [sock_tcp])
+                for s in readable:
+                    if s == sock_tcp:
+                        packet = sock_tcp.recv(1024)
+                        if packet[0] == b'\x05':
+                            sock_tcp.send(b'\x05')
+                        elif packet[0] == b'\x03':
+                            print("Received ERR from server.")
+
+        self.pingResponder = threading.Thread(target=ping_responder, args=[self.sock])
 
         self.__send_byte(10)
         self.__send_arr([self.num_pixels >> 8, self.num_pixels & 0xff])

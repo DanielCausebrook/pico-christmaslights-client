@@ -11,9 +11,10 @@ class GentleBlueWithRainbowsPattern(LightPattern):
     def __init__(self, num_pixels):
         super().__init__(num_pixels)
 
-        opensimplex.random_seed()
+    def get_name(self):
+        return 'Gentle with rainbows'
 
-    def main_loop(self, t, delta_t):
+    def do_main_loop(self, t, delta_t):
         for x in range(self.num_pixels):
             h = 0.6
             s = 1

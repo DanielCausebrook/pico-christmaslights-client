@@ -20,7 +20,10 @@ class BouncingBlocksPattern(LightPattern):
             self.carHues[c] = random.uniform(0, 1)
             self.carSizes[c] = random.randint(1, 5)
 
-    def main_loop(self, t, delta_t):
+    def get_name(self):
+        return 'Bouncing Blocks'
+
+    def do_main_loop(self, t, delta_t):
         self.clear()
 
         for i in range(self.numCars):

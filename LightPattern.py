@@ -9,9 +9,13 @@ def rgb_to_bytes(rgb):
 class LightPattern:
     def __init__(self, num_pixels):
         self.num_pixels = num_pixels
+        self.last_t = None
         self.pixels = []
         for p in range(num_pixels):
-            self.pixels.append((0, 0, 0))
+            self.pixels.append((0.0, 0.0, 0.0))
+
+    def get_name(self):
+        return type(self).__name__
 
     def clear(self):
         """
@@ -40,7 +44,7 @@ class LightPattern:
             raise "Saturation must be in range [0, 1]"
         if v < 0 or v > 1:
             raise "Value must be in range [0, 1]"
-        self.pixels[pixel] = rgb_to_bytes(colorsys.hsv_to_rgb(h, s, v))
+        self.pixels[pixel] = colorsys.hsv_to_rgb(h, s, v)
 
     def set_pixel_rgb(self, pixel, r, g, b):
         """
@@ -58,14 +62,28 @@ class LightPattern:
             raise "Green must be in range [0, 1]"
         if b < 0 or b > 1:
             raise "Blue must be in range [0, 1]"
-        self.pixels[pixel] = rgb_to_bytes((r, g, b))
+        self.pixels[pixel] = (r, g, b)
 
-    def main_loop(self, t, delta_t):
+    def main_loop(self, t):
+        """
+        :param float t:
+        """
+        if self.last_t is None:
+            self.do_main_loop(t, 0)
+            self.last_t = t
+        elif self.last_t == t:
+            pass
+        else:
+            self.do_main_loop(t, t - self.last_t)
+            self.last_t = t
+
+    def do_main_loop(self, t, delta_t):
         """
         :param float t:
         :param float delta_t:
         """
-        raise "main_loop() must be overridden in subclass."
+        raise "do_main_loop() must be overridden in subclass."
+
 
     def get_delay_s(self):
         return 0.02
