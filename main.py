@@ -1,34 +1,55 @@
-from pico_client import *
-from mathfun import *
+import math
 import time
-import opensimplex
-import numpy as np
+
+import pygame
+
+from bouncing_blocks import BouncingBlocksPattern
+from gentle_blue_with_rainbows import GentleBlueWithRainbowsPattern
+from pico_client import *
 
 num_pixels = 200
+patterns = [
+    BouncingBlocksPattern(num_pixels),
+    GentleBlueWithRainbowsPattern(num_pixels)
+]
+PATTERN = 1
 
-lights = PicoNeopixel("10.0.1.34", num_pixels)
-opensimplex.random_seed()
+brightness_modifier = 1
 
-delay_s = 0.03
-t = 0
+lights = PicoNeopixel("192.168.1.135", num_pixels)
 
-while True:
+pygame.init()
+display_width = 480
+display_height = 360
+display_padding = 20
+screen = pygame.display.set_mode((480, 360))
+
+start_time = time.time()
+last_time = start_time
+
+running = True
+while running:
     pixels = []
 
+    for event in pygame.event.get():
+        # only do something if the event is of type QUIT
+        if event.type == pygame.QUIT:
+            # change the value to False, to exit the main loop
+            running = False
+
+    t = time.time()
+    patterns[PATTERN].main_loop(t - start_time, t - last_time)
+    last_time = t
+
+    lights.pixels = patterns[PATTERN].get_frame()
+
     for x in range(num_pixels):
-        h = 0.6
-        s = 1
-        v = 1
+        lights.pixels[x] = (
+            math.floor(lights.pixels[x][0] * brightness_modifier),
+            math.floor(lights.pixels[x][1] * brightness_modifier),
+            math.floor(lights.pixels[x][2] * brightness_modifier)
+        )
 
-        noise = opensimplex.noise2(t, (x / 40) - (t / -4))
-        h += smoothstep(-0.2, 0.2, noise) / 4
-
-        noise = opensimplex.noise2((t + 218987941) / 2, (x / 80) - (t / 4))
-        h += smoothstep(-0.3, 0.3, noise)
-
-        h = h % 1
-        lights.set_hsv(x, h, s, v)
     lights.show()
 
-    time.sleep(delay_s)
-    t += delay_s
+    time.sleep(patterns[PATTERN].get_delay_s())

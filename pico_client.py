@@ -17,12 +17,12 @@ class PicoNeopixel:
       - coded for clarity, not efficiency
     """
 
-    def __init__(self, host_ip, numPixels):
+    def __init__(self, host_ip, num_pixels):
         """
         :param string host_ip: The IP address of the lights.
-        :param int numPixels: The number of LEDs in the light string.
+        :param int num_pixels: The number of LEDs in the light string.
         """
-        self.numPixels = numPixels
+        self.num_pixels = num_pixels
         self.host_ip = host_ip
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -35,14 +35,14 @@ class PicoNeopixel:
         print("Connected")
 
         self.__send_byte(10)
-        self.__send_arr([self.numPixels >> 8, self.numPixels & 0xff])
+        self.__send_arr([self.num_pixels >> 8, self.num_pixels & 0xff])
         if self.sock.recv(1) != b'\x02':
-            raise 'Did not receive OK'
+            raise 'Failed to initialise pixels.'
         else:
-            print('OK!')
+            print('Successfully initialised! (' + str(num_pixels) + ' pixels)')
 
         self.pixels = []
-        for p in range(numPixels):
+        for p in range(num_pixels):
             self.pixels.append((0, 0, 0))
 
     def __send_arr(self, arr):
@@ -67,8 +67,8 @@ class PicoNeopixel:
         :param float s: Saturation, in range [0, 1]
         :param float v: Value, in range [0, 1]
         """
-        if pixel > self.numPixels - 1:
-            raise "Provided pixel index (" + str(pixel) + ") is too large (numPixels: " + str(self.numPixels) + ")."
+        if pixel > self.num_pixels - 1:
+            raise "Provided pixel index (" + str(pixel) + ") is too large (numPixels: " + str(self.num_pixels) + ")."
         if h < 0 or h > 1:
             raise "Hue must be in range [0, 1]"
         if s < 0 or s > 1:
@@ -101,7 +101,7 @@ class PicoNeopixel:
 
         Remember to call show() to send all pixel values to the lights.
         """
-        for p in range(self.numPixels):
+        for p in range(self.num_pixels):
             self.pixels[p] = (0, 0, 0)
 
     def show(self):
@@ -122,6 +122,7 @@ class PicoNeopixel:
     def __exit__(self, exc_type, exc_value, traceback):
         self.sock.close()
         self.sock_udp.close()
+        print("Disconnected")
 
 
 #
