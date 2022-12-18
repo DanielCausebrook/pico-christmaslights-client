@@ -81,7 +81,7 @@ class LightPattern:
             self.do_main_loop(t, delta_t, palette)
             self.last_t = t
 
-    def do_main_loop(self, t, delta_t, palette: Palette):
+    def do_main_loop(self, t: float, delta_t: float, palette: Palette):
         """
         :param Palette palette:
         :param float t:

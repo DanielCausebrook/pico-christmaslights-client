@@ -9,6 +9,9 @@ from pygame.surface import Surface, SurfaceType
 from LightPattern import LightPattern
 from palette import Palette
 from mathfun import *
+from transition import Transition
+from transitions.fade import FadeTransition
+from transitions.wipe import WipeTransition
 
 pygame.init()
 display_width = 720
@@ -27,16 +30,16 @@ GAME_FONT = pygame.freetype.Font("resources/RobotoSlab-VariableFont_wght.ttf", 1
 class ControlPanel(LightPattern):
     screen: Union[Surface, SurfaceType]
     patterns: List[LightPattern]
-    selected_pattern_index: int
+    current_pattern: LightPattern
     running: bool
 
-    def __init__(self, num_pixels: int, patterns: List[LightPattern], selected_pattern_index=0):
+    def __init__(self, num_pixels: int, patterns: List[LightPattern], current_pattern: LightPattern = None):
         super().__init__(num_pixels)
 
         self.screen = pygame.display.set_mode((display_width, display_height))
         self.screen.fill(pygame.Color((0, 0, 0)))
         self.patterns = patterns
-        self.selected_pattern_index = selected_pattern_index
+        self.current_pattern = current_pattern
         self.running = True
 
         self.__draw_pattern_buttons()
@@ -56,10 +59,11 @@ class ControlPanel(LightPattern):
             display_patterns_button_h
         )
 
-    def __draw_pattern_buttons(self):
+    def __draw_pattern_buttons(self) -> None:
         for p in range(len(self.patterns)):
             area = self.__get_pattern_button_rect(p)
-            color = display_patterns_button_color_selected if self.selected_pattern_index == p else display_patterns_button_color
+            color = display_patterns_button_color_selected if self.current_pattern == self.patterns[
+                p] else display_patterns_button_color
             pygame.draw.rect(self.screen, color, area)
             text_surface, rect = GAME_FONT.render(self.patterns[p].get_name(), (255, 255, 255))
             self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 12))
@@ -72,27 +76,29 @@ class ControlPanel(LightPattern):
                 # change the value to False, to exit the main loop
                 self.running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pattern_button_clicked = None
-                for p in range(len(self.patterns)):
-                    if self.__get_pattern_button_rect(p).collidepoint(pygame.mouse.get_pos()):
-                        pattern_button_clicked = p
-                        break
-                if pattern_button_clicked is not None:
-                    self.selected_pattern_index = pattern_button_clicked
-                    self.__draw_pattern_buttons()
+                if not isinstance(self.current_pattern, Transition):
+                    for p in range(len(self.patterns)):
+                        if self.patterns[p] != self.current_pattern and self.__get_pattern_button_rect(p).collidepoint(pygame.mouse.get_pos()):
+                            self.current_pattern = WipeTransition(self.num_pixels, self.current_pattern, self.patterns[p], 2, 80)
+                            self.__draw_pattern_buttons()
+                            break
 
-        self.patterns[self.selected_pattern_index].main_loop(t, delta_t, palette)
+        if self.current_pattern is not None:
+            self.current_pattern.main_loop(t, delta_t, palette)
+            self.pixels = self.current_pattern.get_frame()
+        else:
+            self.clear()
 
-        frame = self.patterns[self.selected_pattern_index].get_frame()
+        if isinstance(self.current_pattern, Transition) and self.current_pattern.is_complete():
+            self.current_pattern = self.current_pattern.unwrap()
+            self.__draw_pattern_buttons()
 
         for p in range(self.num_pixels):
             pygame.draw.circle(
                 self.screen,
-                pygame.Color(*rgb_to_bytes(frame[p])).correct_gamma(0.5),
-                (display_padding + p * ((display_width - 2*display_padding) / self.num_pixels), display_padding),
+                pygame.Color(*rgb_to_bytes(self.pixels[p])).correct_gamma(0.5),
+                (display_padding + p * ((display_width - 2 * display_padding) / self.num_pixels), display_padding),
                 2
             )
-
-        self.pixels = frame
 
         pygame.display.update()

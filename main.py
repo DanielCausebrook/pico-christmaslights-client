@@ -8,6 +8,7 @@ from patterns.bouncing_blocks import BouncingBlocksPattern
 from patterns.gentle_2tone import Gentle2TonePattern
 from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
 from blended_pattern import BlendedPattern
+from patterns.off import OffPattern
 from pico_client import *
 from mathfun import rgb_to_bytes
 
@@ -18,6 +19,7 @@ opensimplex.random_seed()
 
 
 def get_patterns():
+    off_pattern = OffPattern(num_pixels)
     bouncing_blocks_pattern = BouncingBlocksPattern(num_pixels)
     gentle_with_rainbows_pattern = GentleWithRainbowsPattern(num_pixels)
     # hybrid_test = HybridPattern(num_pixels, [bouncing_blocks_pattern, gentle_with_rainbows_pattern])
@@ -27,11 +29,12 @@ def get_patterns():
     # hybrid_test.set_mix([0.5, 0.5])
 
     return [
+        off_pattern,
         bouncing_blocks_pattern,
         gentle_with_rainbows_pattern,
         # hybrid_test,
         Gentle2TonePattern(num_pixels),
-    ], 1
+    ], off_pattern
 
 
 control_panel = ControlPanel(num_pixels, *get_patterns())
