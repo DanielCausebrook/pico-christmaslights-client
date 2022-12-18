@@ -38,7 +38,7 @@ class BouncingBlocksPattern(LightPattern):
             mathfun.rgb_interp(palette.secondary, (0, 0, 0), 0.6),
             palette.accent
         )
-        self.gentle_bg.main_loop(t, bg_palette)
+        self.gentle_bg.main_loop(t, delta_t, bg_palette)
         self.pixels = self.gentle_bg.pixels
 
         for i in range(self.numCars):

@@ -66,18 +66,19 @@ class LightPattern:
             raise "Blue must be in range [0, 1]"
         self.pixels[pixel] = (r, g, b)
 
-    def main_loop(self, t: float, palette: Palette):
+    def main_loop(self, t: float, delta_t: float, palette: Palette):
         """
+        :param float delta_t:
         :param Palette palette:
         :param float t:
         """
         if self.last_t is None:
-            self.do_main_loop(t, 0, palette)
+            self.do_main_loop(t, delta_t, palette)
             self.last_t = t
         elif self.last_t == t:
             pass
         else:
-            self.do_main_loop(t, t - self.last_t, palette)
+            self.do_main_loop(t, delta_t, palette)
             self.last_t = t
 
     def do_main_loop(self, t, delta_t, palette: Palette):

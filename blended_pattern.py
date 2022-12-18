@@ -1,8 +1,13 @@
+from typing import List
+
 from LightPattern import LightPattern
 import mathfun
 
 
-class HybridPattern(LightPattern):
+class BlendedPattern(LightPattern):
+    patterns: List[LightPattern]
+    pixel_mixes: List[List[float]]
+
     def __init__(self, num_pixels, patterns):
         """
         :param int num_pixels:
@@ -27,7 +32,7 @@ class HybridPattern(LightPattern):
     def do_main_loop(self, t, delta_t, palette):
         frames = []
         for pattern_index in range(len(self.patterns)):
-            self.patterns[pattern_index].main_loop(t, palette)
+            self.patterns[pattern_index].main_loop(t, delta_t, palette)
             frames.append(self.patterns[pattern_index].get_frame())
 
         for pixel in range(self.num_pixels):

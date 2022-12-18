@@ -1,3 +1,4 @@
+import atexit
 import colorsys
 import select
 import socket
@@ -37,12 +38,18 @@ class PicoNeopixel:
                 for s in readable:
                     if s == sock_tcp:
                         packet = sock_tcp.recv(1024)
-                        if packet[0] == b'\x05':
-                            sock_tcp.send(b'\x05')
-                        elif packet[0] == b'\x03':
-                            print("Received ERR from server.")
+                        if len(packet) > 0:
+                            if packet == b'\x05':
+                                sock_tcp.send(b'\x05')
+                            elif packet == b'\x03':
+                                print("Received ERR from server.")
+                            else:
+                                print("Received unknown packet: " + str([x for x in packet]))
 
-        self.pingResponder = threading.Thread(target=ping_responder, args=[self.sock])
+        self.pingResponder = threading.Thread(target=ping_responder, args=[self.sock], daemon=True)
+        self.pingResponder.start()
+
+        atexit.register(self.close)
 
         self.__send_byte(10)
         self.__send_arr([self.num_pixels >> 8, self.num_pixels & 0xff])
@@ -126,13 +133,18 @@ class PicoNeopixel:
             arr.append(b)
         self.__send_arr_udp(arr)
 
+    def close(self):
+        self.sock.close()
+        self.sock_udp.close()
+        self.connected = False
+        print("Disconnected")
+
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.sock.close()
-        self.sock_udp.close()
-        print("Disconnected")
+        self.close()
 
 
 #
