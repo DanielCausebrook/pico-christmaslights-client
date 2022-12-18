@@ -39,7 +39,7 @@ def get_patterns():
 
 control_panel = ControlPanel(num_pixels, *get_patterns())
 
-brightness_modifier = 1
+BRIGHTNESS = 1
 
 start_time = time.time()
 last_time = start_time
@@ -53,9 +53,9 @@ while control_panel.is_running():
 
     for x in range(num_pixels):
         frame[x] = (
-            frame[x][0] * brightness_modifier,
-            frame[x][1] * brightness_modifier,
-            frame[x][2] * brightness_modifier
+            frame[x][0] * BRIGHTNESS,
+            frame[x][1] * BRIGHTNESS,
+            frame[x][2] * BRIGHTNESS
         )
 
     lights.pixels = [rgb_to_bytes(x) for x in frame]

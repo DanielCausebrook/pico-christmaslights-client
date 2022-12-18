@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 from LightPattern import LightPattern
 from palette import Palette
 
@@ -23,15 +25,19 @@ class Transition(LightPattern):
 
     def unwrap(self) -> LightPattern:
         if self.progress < 1:
-            raise 'Cannot unwrap an incomplete transition.'
+            return self
         return self.pattern2
 
-    def main_loop(self, t: float, delta_t: float, palette: Palette):
+    def main_loop(self, t: float, delta_t: float, palette: Palette) -> List[Tuple[float, float, float]]:
         """
         :param float delta_t:
         :param Palette palette:
         :param float t:
         """
+
+        self.pattern1 = self.pattern1.unwrap()
+        self.pattern2 = self.pattern2.unwrap()
+
         if self.last_t is None:
             self.do_main_loop(t, delta_t, palette)
             self.last_t = t
@@ -41,11 +47,11 @@ class Transition(LightPattern):
             self.progress += delta_t / self.duration_s
 
             if self.progress <= 0:
-                self.pattern1.main_loop(t, delta_t, palette)
-                self.pixels = self.pattern1.get_frame()
+                self.pixels = self.pattern1.main_loop(t, delta_t, palette)
             elif self.progress >= 1:
-                self.pattern2.main_loop(t, delta_t, palette)
-                self.pixels = self.pattern2.get_frame()
+                self.pixels = self.pattern2.main_loop(t, delta_t, palette)
             else:
                 self.do_main_loop(t, delta_t, palette)
                 self.last_t = t
+
+        return self.pixels

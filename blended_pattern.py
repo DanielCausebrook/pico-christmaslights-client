@@ -32,6 +32,7 @@ class BlendedPattern(LightPattern):
     def do_main_loop(self, t, delta_t, palette):
         frames = []
         for pattern_index in range(len(self.patterns)):
+            self.patterns[pattern_index] = self.patterns[pattern_index].unwrap()
             self.patterns[pattern_index].main_loop(t, delta_t, palette)
             frames.append(self.patterns[pattern_index].get_frame())
 

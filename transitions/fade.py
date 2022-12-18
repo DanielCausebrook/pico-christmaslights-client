@@ -13,8 +13,6 @@ class FadeTransition(Transition):
         self.duration_s = duration_s
 
     def do_main_loop(self, t: float, delta_t: float, palette: Palette):
-        self.pattern1.main_loop(t, delta_t, palette)
-        self.pattern2.main_loop(t, delta_t, palette)
-        frame1 = self.pattern1.get_frame()
-        frame2 = self.pattern2.get_frame()
+        frame1 = self.pattern1.main_loop(t, delta_t, palette)
+        frame2 = self.pattern2.main_loop(t, delta_t, palette)
         self.pixels = [rgb_interp(frame1[p], frame2[p], self.get_progress()) for p in range(self.num_pixels)]

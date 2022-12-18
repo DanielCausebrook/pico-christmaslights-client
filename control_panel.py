@@ -36,6 +36,7 @@ class ControlPanel(LightPattern):
     def __init__(self, num_pixels: int, patterns: List[LightPattern], current_pattern: LightPattern = None):
         super().__init__(num_pixels)
 
+        pygame.display.set_caption("Christmas Lights Control Panel")
         self.screen = pygame.display.set_mode((display_width, display_height))
         self.screen.fill(pygame.Color((0, 0, 0)))
         self.patterns = patterns
@@ -80,18 +81,15 @@ class ControlPanel(LightPattern):
                     for p in range(len(self.patterns)):
                         if self.patterns[p] != self.current_pattern and self.__get_pattern_button_rect(p).collidepoint(pygame.mouse.get_pos()):
                             self.current_pattern = WipeTransition(self.num_pixels, self.current_pattern, self.patterns[p], 2, 80)
-                            self.__draw_pattern_buttons()
                             break
 
         if self.current_pattern is not None:
-            self.current_pattern.main_loop(t, delta_t, palette)
-            self.pixels = self.current_pattern.get_frame()
+            self.current_pattern = self.current_pattern.unwrap()
+            self.pixels = self.current_pattern.main_loop(t, delta_t, palette)
         else:
             self.clear()
 
-        if isinstance(self.current_pattern, Transition) and self.current_pattern.is_complete():
-            self.current_pattern = self.current_pattern.unwrap()
-            self.__draw_pattern_buttons()
+        self.__draw_pattern_buttons()
 
         for p in range(self.num_pixels):
             pygame.draw.circle(

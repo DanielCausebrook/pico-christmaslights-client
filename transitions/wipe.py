@@ -1,6 +1,6 @@
 from LightPattern import LightPattern
 from blended_pattern import BlendedPattern
-from mathfun import rgb_interp, smoothstep
+from mathfun import smoothstep
 from palette import Palette
 from transition import Transition
 
@@ -33,5 +33,4 @@ class WipeTransition(Transition):
             else:
                 self.blended_pattern.set_pixel_mix(p, [1-amount, amount])
 
-        self.blended_pattern.main_loop(t, delta_t, palette)
-        self.pixels = self.blended_pattern.get_frame()
+        self.pixels = self.blended_pattern.main_loop(t, delta_t, palette)

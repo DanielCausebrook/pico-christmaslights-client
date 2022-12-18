@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import colorsys
+from typing import Optional, List, Tuple
 
 from palette import Palette
 
@@ -9,6 +12,9 @@ def rgb_to_bytes(rgb):
 
 
 class LightPattern:
+    num_pixels: int
+    palette_override: Optional[Palette] = None
+
     def __init__(self, num_pixels):
         self.num_pixels = num_pixels
         self.last_t = None
@@ -18,6 +24,20 @@ class LightPattern:
 
     def get_name(self):
         return type(self).__name__
+
+    def override_palette(self, palette: Optional[Palette]):
+        self.palette_override = palette
+
+    def unwrap(self) -> LightPattern:
+        """
+        Returns a new LightPattern (if any) to use in place of this one.
+
+        For LightPatterns which wrap other patterns, such as transitions, we need a method to dispose of the transition
+        layer once it is done. Any class which contains other LightPatterns may periodically call
+        `pattern = pattern.unwrap()` to remove any redundant or completed patterns.
+        :return:
+        """
+        return self
 
     def clear(self):
         """
@@ -66,20 +86,22 @@ class LightPattern:
             raise "Blue must be in range [0, 1]"
         self.pixels[pixel] = (r, g, b)
 
-    def main_loop(self, t: float, delta_t: float, palette: Palette):
+    def main_loop(self, t: float, delta_t: float, palette: Palette) -> List[Tuple[float, float, float]]:
         """
         :param float delta_t:
         :param Palette palette:
         :param float t:
         """
         if self.last_t is None:
-            self.do_main_loop(t, delta_t, palette)
+            self.do_main_loop(t, delta_t, palette if self.palette_override is None else self.palette_override)
             self.last_t = t
         elif self.last_t == t:
             pass
         else:
-            self.do_main_loop(t, delta_t, palette)
+            self.do_main_loop(t, delta_t, palette if self.palette_override is None else self.palette_override)
             self.last_t = t
+
+        return self.pixels
 
     def do_main_loop(self, t: float, delta_t: float, palette: Palette):
         """
