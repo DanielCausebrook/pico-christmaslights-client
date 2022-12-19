@@ -1,8 +1,20 @@
+from typing import Optional
+
 from LightPattern import LightPattern
 from blended_pattern import BlendedPattern
 from mathfun import smoothstep
 from palette import Palette
-from transition import Transition
+from transition import Transition, TransitionFactory
+
+
+class WipeTransitionFactory(TransitionFactory):
+    def __init__(self, softness: float = 0, reverse: bool = False, name: Optional[str] = None):
+        super().__init__(name)
+        self.softness = softness
+        self.reverse = reverse
+
+    def new_transition(self, num_pixels: int, pattern1: LightPattern, pattern2: LightPattern, duration_s: float):
+        return WipeTransition(num_pixels, pattern1, pattern2, duration_s, self.softness, self.reverse)
 
 
 class WipeTransition(Transition):
@@ -22,9 +34,9 @@ class WipeTransition(Transition):
 
     def do_main_loop(self, t: float, delta_t: float, palette: Palette):
         if not self.reverse:
-            wipe_pos = self.num_pixels * self.progress
+            wipe_pos = (self.num_pixels + self.softness) * self.progress - self.softness/2
         else:
-            wipe_pos = self.num_pixels * (1 - self.progress)
+            wipe_pos = (self.num_pixels + self.softness) * (1 - self.progress) - self.softness/2
 
         for p in range(self.num_pixels):
             amount = smoothstep(wipe_pos - self.softness/2, wipe_pos + self.softness/2, p)

@@ -1,3 +1,4 @@
+import datetime
 import time
 
 import opensimplex
@@ -7,37 +8,21 @@ from palette import Palette
 from patterns.bouncing_blocks import BouncingBlocksPattern
 from patterns.gentle_2tone import Gentle2TonePattern
 from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
-from blended_pattern import BlendedPattern
-from patterns.off import OffPattern
 from pico_client import *
-from mathfun import rgb_to_bytes
+from mathfun import rgb_to_bytes, smoothstep
+from transitions.wipe import WipeTransitionFactory
 
 num_pixels = 200
 lights = PicoNeopixel("192.168.1.135", num_pixels)
 palette = Palette()
 opensimplex.random_seed()
 
-
-def get_patterns():
-    off_pattern = OffPattern(num_pixels)
-    bouncing_blocks_pattern = BouncingBlocksPattern(num_pixels)
-    gentle_with_rainbows_pattern = GentleWithRainbowsPattern(num_pixels)
-    # hybrid_test = HybridPattern(num_pixels, [bouncing_blocks_pattern, gentle_with_rainbows_pattern])
-    # # for p in range(num_pixels):
-    # #     p_prop = p/num_pixels
-    # #     hybrid_test.set_pixel_mix(p, [p_prop, 1-p_prop])
-    # hybrid_test.set_mix([0.5, 0.5])
-
-    return [
-        off_pattern,
-        bouncing_blocks_pattern,
-        gentle_with_rainbows_pattern,
-        # hybrid_test,
-        Gentle2TonePattern(num_pixels),
-    ], off_pattern
-
-
-control_panel = ControlPanel(num_pixels, *get_patterns())
+control_panel = ControlPanel(num_pixels)\
+    .add_pattern(BouncingBlocksPattern(num_pixels))\
+    .add_pattern(GentleWithRainbowsPattern(num_pixels))\
+    .add_pattern(Gentle2TonePattern(num_pixels))\
+    .add_transition(WipeTransitionFactory(80, name='Wipe smooth'))\
+    .add_transition(WipeTransitionFactory(1, name='Wipe sharp'))
 
 BRIGHTNESS = 1
 
@@ -45,17 +30,35 @@ start_time = time.time()
 last_time = start_time
 
 while control_panel.is_running():
+    today = datetime.datetime.now()
+    microseconds_today = (
+            (
+                    (
+                            (today.hour * 60) + today.minute
+                    ) * 60 + today.second
+            ) * 1_000_000 + today.microsecond
+    )
+    day_proportion = microseconds_today / 86_400_000_000
+    night_adjustment = smoothstep(8/24, 8.5/24, day_proportion) - smoothstep(23.5/24, 1, day_proportion)
+    night_brightness = 0.04 + 0.96 * night_adjustment
+    night_time_dilation = 0.5 + 0.5 * night_adjustment
+
     t = time.time()
-    control_panel.main_loop(t - start_time, t - last_time, palette)
+    delta_t = t - last_time
+
+    start_time += delta_t * (1 - night_time_dilation)
+    delta_t *= night_time_dilation
+
+    control_panel.main_loop(t - start_time, delta_t, palette)
     last_time = t
 
     frame = control_panel.get_frame()
 
     for x in range(num_pixels):
         frame[x] = (
-            frame[x][0] * BRIGHTNESS,
-            frame[x][1] * BRIGHTNESS,
-            frame[x][2] * BRIGHTNESS
+            frame[x][0] * BRIGHTNESS * night_brightness,
+            frame[x][1] * BRIGHTNESS * night_brightness,
+            frame[x][2] * BRIGHTNESS * night_brightness
         )
 
     lights.pixels = [rgb_to_bytes(x) for x in frame]

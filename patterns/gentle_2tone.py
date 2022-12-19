@@ -16,15 +16,12 @@ class Gentle2TonePattern(LightPattern):
         return 'Gentle 2Tone'
 
     def do_main_loop(self, t, delta_t, palette):
-        primary_hsv = colorsys.rgb_to_hsv(*palette.primary)
-        secondary_hsv = colorsys.rgb_to_hsv(*palette.secondary)
-
         for x in range(self.num_pixels):
             noise = opensimplex.noise2((t + self.seed) * self.speed, (x / 40) - (t / -4))
-            color_hsv = hsv_interp(
-                primary_hsv,
-                secondary_hsv,
+            color_hsv = rgb_interp(
+                palette.primary,
+                palette.secondary,
                 smoothstep(-self.gradient_width, self.gradient_width, noise)
             )
 
-            self.set_pixel_hsv(x, *color_hsv)
+            self.set_pixel_rgb(x, *color_hsv)

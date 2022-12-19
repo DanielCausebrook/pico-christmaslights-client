@@ -1,8 +1,18 @@
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 from LightPattern import LightPattern
 from palette import Palette
 
+
+class TransitionFactory:
+    def __init__(self, name: Optional[str] = None):
+        self.name = name
+
+    def get_name(self):
+        return self.name if self.name is not None else type(self).__name__
+
+    def new_transition(self, num_pixels: int, pattern1: LightPattern, pattern2: LightPattern, duration_s: float):
+        raise "new_transition() must be implemented in child class."
 
 class Transition(LightPattern):
     pattern1: LightPattern

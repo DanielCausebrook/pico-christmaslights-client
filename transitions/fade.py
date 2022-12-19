@@ -1,7 +1,15 @@
 from LightPattern import LightPattern
 from mathfun import rgb_interp
 from palette import Palette
-from transition import Transition
+from transition import Transition, TransitionFactory
+
+
+class FadeTransitionFactory(TransitionFactory):
+    def new_transition(self, num_pixels: int, pattern1: LightPattern, pattern2: LightPattern, duration_s: float):
+        return FadeTransition(num_pixels, pattern1, pattern2, duration_s)
+
+    def get_name(self):
+        return 'Fade'
 
 
 class FadeTransition(Transition):
