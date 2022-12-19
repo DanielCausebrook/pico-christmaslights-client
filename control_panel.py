@@ -11,7 +11,7 @@ from pygame.surface import Surface, SurfaceType
 from LightPattern import LightPattern
 from palette import Palette
 from mathfun import *
-from patterns.off import OffPattern
+from patterns.solid_color import SolidColorPattern
 from transition import Transition, TransitionFactory
 from transitions.fade import FadeTransition, FadeTransitionFactory
 from transitions.wipe import WipeTransition
@@ -32,10 +32,15 @@ GAME_FONT = pygame.freetype.Font("resources/RobotoSlab-VariableFont_wght.ttf", 1
 
 class ControlPanel(LightPattern):
     screen: Union[Surface, SurfaceType]
-    patterns: List[LightPattern]
-    current_pattern: Optional[LightPattern]
-    transitions: List[TransitionFactory]
-    current_transition: Optional[TransitionFactory]
+
+    patterns: List[LightPattern] = []
+    pattern_name_overrides: List[Optional[str]] = []
+    current_pattern: Optional[LightPattern] = None
+
+    transitions: List[TransitionFactory] = []
+    transition_name_overrides: List[Optional[str]] = []
+    current_transition: Optional[TransitionFactory] = None
+
     running: bool
 
     def __init__(self, num_pixels: int):
@@ -45,10 +50,15 @@ class ControlPanel(LightPattern):
         pygame.display.set_caption("Christmas Lights Control Panel")
         self.screen = pygame.display.set_mode((display_width, display_height))
         self.screen.fill(pygame.Color((0, 0, 0)))
-        self.patterns = [OffPattern(num_pixels)]
-        self.current_pattern = self.patterns[0]
-        self.transitions = [FadeTransitionFactory()]
-        self.current_transition = self.transitions[0]
+
+        off = SolidColorPattern(num_pixels, (0, 0, 0))
+        self.add_pattern(off, "Lights Off")
+        self.current_pattern = off
+
+        fade = FadeTransitionFactory()
+        self.add_transition(fade)
+        self.current_transition = fade
+
         self.running = True
 
         self.__draw_buttons()
@@ -57,12 +67,14 @@ class ControlPanel(LightPattern):
     def is_running(self) -> bool:
         return self.running
 
-    def add_pattern(self, pattern: LightPattern) -> ControlPanel:
+    def add_pattern(self, pattern: LightPattern, name: Optional[str] = None) -> ControlPanel:
         self.patterns.append(pattern)
+        self.pattern_name_overrides.append(name)
         return self
 
-    def add_transition(self, transition: TransitionFactory) -> ControlPanel:
+    def add_transition(self, transition: TransitionFactory, name: Optional[str] = None) -> ControlPanel:
         self.transitions.append(transition)
+        self.transition_name_overrides.append(name)
         return self
 
     def __get_big_button_rect(self, row: int, col: int) -> Rect:
@@ -78,13 +90,21 @@ class ControlPanel(LightPattern):
             area = self.__get_big_button_rect(0, i)
             color = big_button_color_selected if self.current_pattern == self.patterns[i] else big_button_color
             pygame.draw.rect(self.screen, color, area)
-            text_surface, rect = GAME_FONT.render(self.patterns[i].get_name(), (255, 255, 255))
+            if self.pattern_name_overrides[i] is not None:
+                name = self.pattern_name_overrides[i]
+            else:
+                name = self.patterns[i].get_name()
+            text_surface, rect = GAME_FONT.render(name, (255, 255, 255))
             self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 12))
         for i in range(len(self.transitions)):
             area = self.__get_big_button_rect(1, i)
             color = big_button_color_selected if self.current_transition == self.transitions[i] else big_button_color
             pygame.draw.rect(self.screen, color, area)
-            text_surface, rect = GAME_FONT.render(self.transitions[i].get_name(), (255, 255, 255))
+            if self.transition_name_overrides[i] is not None:
+                name = self.transition_name_overrides[i]
+            else:
+                name = self.transitions[i].get_name()
+            text_surface, rect = GAME_FONT.render(name, (255, 255, 255))
             self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 12))
 
 

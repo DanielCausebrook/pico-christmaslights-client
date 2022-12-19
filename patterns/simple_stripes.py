@@ -5,7 +5,7 @@ from mathfun import rgb_interp, smoothstep
 from palette import Palette
 
 
-class CandyStripesPattern(LightPattern):
+class SimpleStripesPattern(LightPattern):
     width: int
     speed: float
 
@@ -16,7 +16,7 @@ class CandyStripesPattern(LightPattern):
         self.speed = speed
 
     def get_name(self):
-        return 'Candy Stripes'
+        return 'Simple Stripes'
 
     def do_main_loop(self, t: float, delta_t: float, palette: Palette):
         for p in range(self.num_pixels):

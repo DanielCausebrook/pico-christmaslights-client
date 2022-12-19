@@ -8,13 +8,15 @@ from transition import Transition, TransitionFactory
 
 
 class WipeTransitionFactory(TransitionFactory):
-    def __init__(self, softness: float = 0, reverse: bool = False, name: Optional[str] = None):
-        super().__init__(name)
+    def __init__(self, softness: float = 0, reverse: bool = False):
         self.softness = softness
         self.reverse = reverse
 
     def new_transition(self, num_pixels: int, pattern1: LightPattern, pattern2: LightPattern, duration_s: float):
         return WipeTransition(num_pixels, pattern1, pattern2, duration_s, self.softness, self.reverse)
+
+    def get_name(self):
+        return 'Wipe'
 
 
 class WipeTransition(Transition):

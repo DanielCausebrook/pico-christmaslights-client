@@ -15,7 +15,7 @@ class LightPattern:
     num_pixels: int
     palette_override: Optional[Palette] = None
 
-    def __init__(self, num_pixels):
+    def __init__(self, num_pixels: int):
         self.num_pixels = num_pixels
         self.last_t = None
         self.pixels = []
