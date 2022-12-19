@@ -6,6 +6,7 @@ import opensimplex
 from control_panel import ControlPanel
 from palette import Palette
 from patterns.bouncing_blocks import BouncingBlocksPattern
+from patterns.candy_stripes import CandyStripesPattern
 from patterns.gentle_2tone import Gentle2TonePattern
 from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
 from pico_client import *
@@ -15,12 +16,14 @@ from transitions.wipe import WipeTransitionFactory
 num_pixels = 200
 lights = PicoNeopixel("192.168.1.135", num_pixels)
 palette = Palette()
+christmas_palette = Palette(colorsys.hsv_to_rgb(0, 1, 1), colorsys.hsv_to_rgb(0.33, 1, 1))
 opensimplex.random_seed()
 
 control_panel = ControlPanel(num_pixels)\
     .add_pattern(BouncingBlocksPattern(num_pixels))\
     .add_pattern(GentleWithRainbowsPattern(num_pixels))\
     .add_pattern(Gentle2TonePattern(num_pixels))\
+    .add_pattern(CandyStripesPattern(num_pixels, 10).override_palette(christmas_palette))\
     .add_transition(WipeTransitionFactory(80, name='Wipe smooth'))\
     .add_transition(WipeTransitionFactory(1, name='Wipe sharp'))
 
@@ -61,7 +64,7 @@ while control_panel.is_running():
             frame[x][2] * BRIGHTNESS * night_brightness
         )
 
-    lights.pixels = [rgb_to_bytes(x) for x in frame]
+    lights.pixels = [rgb_to_bytes(x) for x in frame].reverse()
     lights.show()
 
     time.sleep(control_panel.get_delay_s())

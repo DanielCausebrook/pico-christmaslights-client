@@ -25,8 +25,9 @@ class LightPattern:
     def get_name(self):
         return type(self).__name__
 
-    def override_palette(self, palette: Optional[Palette]):
+    def override_palette(self, palette: Optional[Palette]) -> LightPattern:
         self.palette_override = palette
+        return self
 
     def unwrap(self) -> LightPattern:
         """
