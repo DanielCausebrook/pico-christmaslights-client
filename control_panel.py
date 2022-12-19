@@ -41,6 +41,7 @@ class ControlPanel(LightPattern):
     def __init__(self, num_pixels: int):
         super().__init__(num_pixels)
 
+        pygame.display.set_icon(pygame.image.load("resources/light_controller_icon.png"))
         pygame.display.set_caption("Christmas Lights Control Panel")
         self.screen = pygame.display.set_mode((display_width, display_height))
         self.screen.fill(pygame.Color((0, 0, 0)))
