@@ -9,12 +9,11 @@ from pygame.rect import Rect
 from pygame.surface import Surface, SurfaceType
 
 from LightPattern import LightPattern
-from palette import Palette
 from mathfun import *
+from palette import Palette
 from patterns.solid_color import SolidColorPattern
-from transition import Transition, TransitionFactory
-from transitions.fade import FadeTransition, FadeTransitionFactory
-from transitions.wipe import WipeTransition
+from transition import TransitionFactory
+from transitions.fade import FadeTransitionFactory
 
 pygame.init()
 display_width = 720
@@ -22,9 +21,11 @@ display_height = 360
 display_padding = 20
 leds_y = display_padding + 5
 big_buttons_x = display_padding + 10
-big_buttons_y = display_padding + 50
+big_buttons_y = display_padding + 60
 big_button_w = 150
 big_button_h = 25
+big_button_spacing_x = 15
+big_button_spacing_y = 5
 big_button_color = pygame.Color(*rgb_to_bytes(colorsys.hsv_to_rgb(0, 0, 0.25)))
 big_button_color_selected = pygame.Color(*rgb_to_bytes(colorsys.hsv_to_rgb(0.66, 0.8, 0.5)))
 GAME_FONT = pygame.freetype.Font("resources/RobotoSlab-VariableFont_wght.ttf", 14)
@@ -79,13 +80,25 @@ class ControlPanel(LightPattern):
 
     def __get_big_button_rect(self, row: int, col: int) -> Rect:
         return pygame.Rect(
-            big_buttons_x + row * (big_button_w + 15),
-            big_buttons_y + col * (big_button_h + 5),
+            big_buttons_x + row * (big_button_w + big_button_spacing_x),
+            big_buttons_y + col * (big_button_h + big_button_spacing_y),
             big_button_w,
             big_button_h
         )
 
     def __draw_buttons(self) -> None:
+        pygame.draw.rect(
+            self.screen,
+            (0, 0, 0),
+            (big_buttons_x, big_buttons_y - 20, big_button_w * 2 + big_button_spacing_x, 20)
+        )
+
+        text_surface, rect = GAME_FONT.render('Patterns', (180, 180, 180), style=pygame.freetype.STYLE_STRONG)
+        self.screen.blit(text_surface, (big_buttons_x + 44, big_buttons_y - 19))
+
+        text_surface, rect = GAME_FONT.render('Transitions', (180, 180, 180), style=pygame.freetype.STYLE_STRONG)
+        self.screen.blit(text_surface, (big_buttons_x + big_button_w + big_button_spacing_x + 34, big_buttons_y - 19))
+
         for i in range(len(self.patterns)):
             area = self.__get_big_button_rect(0, i)
             color = big_button_color_selected if self.current_pattern == self.patterns[i] else big_button_color
@@ -95,7 +108,7 @@ class ControlPanel(LightPattern):
             else:
                 name = self.patterns[i].get_name()
             text_surface, rect = GAME_FONT.render(name, (255, 255, 255))
-            self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 12))
+            self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 9))
         for i in range(len(self.transitions)):
             area = self.__get_big_button_rect(1, i)
             color = big_button_color_selected if self.current_transition == self.transitions[i] else big_button_color
@@ -105,7 +118,7 @@ class ControlPanel(LightPattern):
             else:
                 name = self.transitions[i].get_name()
             text_surface, rect = GAME_FONT.render(name, (255, 255, 255))
-            self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 12))
+            self.screen.blit(text_surface, (area.x + 4, area.y + 6), (0, 0, area.w - 8, area.h - 9))
 
 
     def do_main_loop(self, t: float, delta_t: float, palette: Palette) -> None:
@@ -145,10 +158,11 @@ class ControlPanel(LightPattern):
         self.__draw_buttons()
 
         for i in range(self.num_pixels):
+            x = self.num_pixels - i - 1
             pygame.draw.circle(
                 self.screen,
                 pygame.Color(*rgb_to_bytes(self.pixels[i])).correct_gamma(0.5),
-                (display_padding + i * ((display_width - 2 * display_padding) / self.num_pixels), leds_y),
+                (display_padding + x * ((display_width - 2 * display_padding) / self.num_pixels), leds_y),
                 2
             )
 
