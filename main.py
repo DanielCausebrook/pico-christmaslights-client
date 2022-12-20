@@ -9,6 +9,7 @@ from patterns.bouncing_blocks import BouncingBlocksPattern
 from patterns.simple_stripes import SimpleStripesPattern
 from patterns.gentle_2tone import Gentle2TonePattern
 from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
+from patterns.warp_drive import WarpDrivePattern
 from pico_client import *
 from mathfun import rgb_to_bytes, smoothstep
 from transitions.wipe import WipeTransitionFactory
@@ -20,6 +21,9 @@ num_pixels = 200
 lights = PicoNeopixel("192.168.1.135", num_pixels) if not PREVIEW_ONLY else None
 palette = Palette()
 christmas_palette = Palette(colorsys.hsv_to_rgb(0, 1, 1), colorsys.hsv_to_rgb(0.33, 1, 1))
+gold_palette = Palette(colorsys.hsv_to_rgb(20/255, 0.95, 1), colorsys.hsv_to_rgb(0, 0, 1), colorsys.hsv_to_rgb(0, 1, 1))
+gold_red_palette = Palette(colorsys.hsv_to_rgb(20/255, 0.95, 1), colorsys.hsv_to_rgb(0, 1, 1))
+palette = gold_palette
 opensimplex.random_seed()
 
 control_panel = ControlPanel(num_pixels)\
@@ -27,6 +31,8 @@ control_panel = ControlPanel(num_pixels)\
     .add_pattern(GentleWithRainbowsPattern(num_pixels))\
     .add_pattern(Gentle2TonePattern(num_pixels))\
     .add_pattern(SimpleStripesPattern(num_pixels, width=10).override_palette(christmas_palette), name='Candy Stripes')\
+    .add_pattern(SimpleStripesPattern(num_pixels, width=10))\
+    .add_pattern(WarpDrivePattern(num_pixels))\
     .add_transition(WipeTransitionFactory(softness=80), name='Wipe smooth')\
     .add_transition(WipeTransitionFactory(softness=1), name='Wipe sharp')
 

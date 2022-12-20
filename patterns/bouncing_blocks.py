@@ -21,7 +21,7 @@ class BouncingBlocksPattern(LightPattern):
         self.carHeat = np.zeros(self.numCars)
         for c in range(self.numCars):
             self.carPos[c] = random.randint(0, num_pixels - 1)
-            self.carVels[c] = random.uniform(-25, 35)
+            self.carVels[c] = random.uniform(-20, 30)
             self.carHues[c] = random.uniform(0, 1)
             self.carSizes[c] = random.randint(1, 5)
 
