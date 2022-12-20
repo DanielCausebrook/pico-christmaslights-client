@@ -1,5 +1,7 @@
 import atexit
 import colorsys
+import errno
+
 import select
 import socket
 import threading
@@ -21,39 +23,44 @@ class PicoNeopixel:
         """
         self.num_pixels = num_pixels
         self.host_ip = host_ip
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         print("Connecting...")
 
         # Connect to the remote host and port
-        self.sock.connect((host_ip, remote_tcp_port))
+        self.sock_tcp.connect((host_ip, remote_tcp_port))
 
-        self.connected = True
         print("Connected")
 
         def ping_responder(sock_tcp: socket.socket) -> None:
-            while self.connected:
-                readable, writable, exceptional = select.select([sock_tcp], [], [sock_tcp])
-                for s in readable:
-                    if s == sock_tcp:
-                        packet = sock_tcp.recv(1024)
-                        if len(packet) > 0:
-                            if packet == b'\x05':
-                                sock_tcp.send(b'\x05')
-                            elif packet == b'\x03':
-                                print("Received ERR from server.")
-                            else:
-                                print("Received unknown packet: " + str([x for x in packet]))
+            while self.sock_tcp.fileno() != -1:
+                try:
+                    readable, writable, exceptional = select.select([sock_tcp], [], [sock_tcp])
+                    for s in readable:
+                        if s == sock_tcp:
+                            packet = sock_tcp.recv(1024)
+                            if len(packet) > 0:
+                                if packet == b'\x05':
+                                    sock_tcp.send(b'\x05')
+                                elif packet == b'\x03':
+                                    print("Received ERR from server.")
+                                else:
+                                    print("Received unknown packet: " + str([x for x in packet]))
+                except OSError as err:
+                    if err.errno == errno.EBADF:
+                        pass  # Bad file descriptor: connection closed.
+                    else:
+                        raise err
 
-        self.pingResponder = threading.Thread(target=ping_responder, args=[self.sock], daemon=True)
+        self.pingResponder = threading.Thread(target=ping_responder, args=[self.sock_tcp], daemon=True)
         self.pingResponder.start()
 
-        atexit.register(self.close)
+        atexit.register(self.disconnect)
 
         self.__send_byte(10)
         self.__send_arr([self.num_pixels >> 8, self.num_pixels & 0xff])
-        if self.sock.recv(1) != b'\x02':
+        if self.sock_tcp.recv(1) != b'\x02':
             raise 'Failed to initialise pixels.'
         else:
             print('Successfully initialised! (' + str(num_pixels) + ' pixels)')
@@ -62,8 +69,15 @@ class PicoNeopixel:
         for p in range(num_pixels):
             self.pixels.append((0, 0, 0))
 
+    def disconnect(self):
+        connected_before = self.sock_tcp.fileno() != -1
+        self.sock_tcp.close()
+        self.sock_udp.close()
+        if connected_before:
+            print("Disconnected")
+
     def __send_arr(self, arr):
-        self.sock.send(bytearray(arr))
+        self.sock_tcp.send(bytearray(arr))
 
     def __send_arr_udp(self, arr):
         self.sock_udp.sendto(bytearray(arr), (self.host_ip, remote_udp_port))
@@ -133,18 +147,11 @@ class PicoNeopixel:
             arr.append(b)
         self.__send_arr_udp(arr)
 
-    def close(self):
-        self.sock.close()
-        self.sock_udp.close()
-        self.connected = False
-        print("Disconnected")
-
-
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        self.disconnect()
 
 
 #

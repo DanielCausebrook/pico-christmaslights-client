@@ -13,8 +13,11 @@ from pico_client import *
 from mathfun import rgb_to_bytes, smoothstep
 from transitions.wipe import WipeTransitionFactory
 
+PREVIEW_ONLY = False
+BRIGHTNESS = 1
+
 num_pixels = 200
-lights = PicoNeopixel("192.168.1.135", num_pixels)
+lights = PicoNeopixel("192.168.1.135", num_pixels) if not PREVIEW_ONLY else None
 palette = Palette()
 christmas_palette = Palette(colorsys.hsv_to_rgb(0, 1, 1), colorsys.hsv_to_rgb(0.33, 1, 1))
 opensimplex.random_seed()
@@ -26,8 +29,6 @@ control_panel = ControlPanel(num_pixels)\
     .add_pattern(SimpleStripesPattern(num_pixels, width=10).override_palette(christmas_palette), name='Candy Stripes')\
     .add_transition(WipeTransitionFactory(softness=80), name='Wipe smooth')\
     .add_transition(WipeTransitionFactory(softness=1), name='Wipe sharp')
-
-BRIGHTNESS = 1
 
 start_time = time.time()
 last_time = start_time
@@ -42,7 +43,7 @@ while control_panel.is_running():
             ) * 1_000_000 + today.microsecond
     )
     day_proportion = microseconds_today / 86_400_000_000
-    night_adjustment = smoothstep(8/24, 8.5/24, day_proportion) - smoothstep(23.5/24, 1, day_proportion)
+    night_adjustment = smoothstep(8/24, 8.5/24, day_proportion) - smoothstep(22.5/23, 1, day_proportion)
     night_brightness = 0.04 + 0.96 * night_adjustment
     night_time_dilation = 0.5 + 0.5 * night_adjustment
 
@@ -64,8 +65,11 @@ while control_panel.is_running():
             frame[x][2] * BRIGHTNESS * night_brightness
         )
 
-    lights.pixels = [rgb_to_bytes(x) for x in frame]
-    lights.pixels.reverse()
-    lights.show()
+    if not PREVIEW_ONLY:
+        lights.pixels = [rgb_to_bytes(x) for x in frame]
+        lights.show()
 
     time.sleep(control_panel.get_delay_s())
+
+if not PREVIEW_ONLY:
+    lights.disconnect()
