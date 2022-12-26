@@ -1,7 +1,5 @@
-from typing import Optional
-
-from LightPattern import LightPattern
-from blended_pattern import BlendedPattern
+from pattern import LightPattern
+from pattern_blended import BlendedPattern
 from mathfun import smoothstep
 from palette import Palette
 from transition import Transition, TransitionFactory

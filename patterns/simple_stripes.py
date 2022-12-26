@@ -1,7 +1,5 @@
-import math
-
-from LightPattern import LightPattern
-from mathfun import rgb_interp, smoothstep
+from pattern import LightPattern
+from mathfun import smoothstep
 from palette import Palette
 
 
@@ -22,5 +20,5 @@ class SimpleStripesPattern(LightPattern):
         for p in range(self.num_pixels):
             bar_pos = (p - t * self.speed) % (self.width * 2)
             amount = smoothstep(0, 1.5, bar_pos) - smoothstep(self.width, self.width + 1.5, bar_pos)
-            color_rgb = rgb_interp(palette.primary, palette.secondary, amount)
-            self.set_pixel_rgb(p, *color_rgb)
+            color = palette.primary.interp(palette.secondary, amount)
+            self.set_pixel(p, color)

@@ -1,5 +1,4 @@
-from LightPattern import LightPattern
-from pico_client import *
+from pattern import LightPattern
 from mathfun import *
 import opensimplex
 
@@ -18,10 +17,9 @@ class Gentle2TonePattern(LightPattern):
     def do_main_loop(self, t, delta_t, palette):
         for x in range(self.num_pixels):
             noise = opensimplex.noise2((t + self.seed) * self.speed, (x / 40) - (t / -4))
-            color_hsv = rgb_interp(
-                palette.primary,
+            color = palette.primary.interp(
                 palette.secondary,
                 smoothstep(-self.gradient_width, self.gradient_width, noise)
             )
 
-            self.set_pixel_rgb(x, *color_hsv)
+            self.set_pixel(x, color)

@@ -1,6 +1,7 @@
-from typing import Tuple, List, Optional
+from typing import List
 
-from LightPattern import LightPattern
+from colors import Color
+from pattern import LightPattern
 from palette import Palette
 
 
@@ -35,7 +36,7 @@ class Transition(LightPattern):
             return self
         return self.pattern2
 
-    def main_loop(self, t: float, delta_t: float, palette: Palette) -> List[Tuple[float, float, float]]:
+    def main_loop(self, t: float, delta_t: float, palette: Palette) -> List[Color]:
         """
         :param float delta_t:
         :param Palette palette:

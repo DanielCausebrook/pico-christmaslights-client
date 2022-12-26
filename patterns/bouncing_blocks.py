@@ -1,6 +1,9 @@
 import math
 import random
-from LightPattern import LightPattern
+
+import colors
+from colors import HSVColor
+from pattern import LightPattern
 import numpy as np
 
 from palette import Palette
@@ -30,14 +33,10 @@ class BouncingBlocksPattern(LightPattern):
     def get_name(self):
         return 'Bouncing Blocks'
 
-    def do_main_loop(self, t, delta_t, palette):
+    def do_main_loop(self, t: float, delta_t: float, palette: Palette):
         self.clear()
 
-        bg_palette = Palette(
-            mathfun.rgb_interp(palette.primary, (0, 0, 0), 0.6),
-            mathfun.rgb_interp(palette.secondary, (0, 0, 0), 0.6),
-            palette.accent
-        )
+        bg_palette = Palette(palette.primary.dim(0.6), palette.secondary.dim(0.6), palette.accent)
         self.pixels = self.gentle_bg.main_loop(t, delta_t, bg_palette)
 
         for i in range(self.numCars):
@@ -59,4 +58,4 @@ class BouncingBlocksPattern(LightPattern):
             elif self.carHeat[i] > 1:
                 self.carHeat[i] = 1
             for x in range(round(self.carPos[i] - (self.carSizes[i]/2)), round(self.carPos[i] + (self.carSizes[i]/2))):
-                self.set_pixel_hsv((x + self.num_pixels) % self.num_pixels, self.carHues[i], 1 - self.carHeat[i], 1)
+                self.set_pixel((x + self.num_pixels) % self.num_pixels, HSVColor(self.carHues[i], 1 - self.carHeat[i], 1))

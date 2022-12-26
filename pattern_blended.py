@@ -1,6 +1,7 @@
 from typing import List
 
-from LightPattern import LightPattern
+from colors import RGBColor
+from pattern import LightPattern
 import mathfun
 
 
@@ -43,21 +44,23 @@ class BlendedPattern(LightPattern):
             b_sum = 0
 
             for pattern_index in range(len(self.patterns)):
-                rgb = frames[pattern_index][pixel]
+                rgb = frames[pattern_index][pixel].get_rgb()
                 weight = self.pixel_mixes[pixel][pattern_index]
                 total_weight += weight
-                r_sum += mathfun.rgb_component_to_linear(rgb[0]) * weight
-                g_sum += mathfun.rgb_component_to_linear(rgb[1]) * weight
-                b_sum += mathfun.rgb_component_to_linear(rgb[2]) * weight
+                r_sum += mathfun.rgb_component_to_linear(rgb.r) * weight
+                g_sum += mathfun.rgb_component_to_linear(rgb.g) * weight
+                b_sum += mathfun.rgb_component_to_linear(rgb.b) * weight
 
             if total_weight > 1:
                 r_sum /= total_weight
                 g_sum /= total_weight
                 b_sum /= total_weight
 
-            self.set_pixel_rgb(
+            self.set_pixel(
                 pixel,
-                mathfun.rgb_component_from_linear(r_sum),
-                mathfun.rgb_component_from_linear(g_sum),
-                mathfun.rgb_component_from_linear(b_sum)
+                RGBColor(
+                    mathfun.rgb_component_from_linear(r_sum),
+                    mathfun.rgb_component_from_linear(g_sum),
+                    mathfun.rgb_component_from_linear(b_sum)
+                )
             )

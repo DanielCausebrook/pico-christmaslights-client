@@ -3,6 +3,8 @@ import time
 
 import opensimplex
 
+import colors
+from colors import HSVColor, RGBColor, Color
 from control_panel import ControlPanel
 from palette import Palette
 from patterns.bouncing_blocks import BouncingBlocksPattern
@@ -11,7 +13,7 @@ from patterns.gentle_2tone import Gentle2TonePattern
 from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
 from patterns.warp_drive import WarpDrivePattern
 from pico_client import *
-from mathfun import rgb_to_bytes, smoothstep
+from mathfun import smoothstep
 from transitions.wipe import WipeTransitionFactory
 
 PREVIEW_ONLY = False
@@ -19,22 +21,59 @@ BRIGHTNESS = 1
 
 num_pixels = 200
 lights = PicoNeopixel("192.168.1.135", num_pixels) if not PREVIEW_ONLY else None
-palette = Palette()
-christmas_palette = Palette(colorsys.hsv_to_rgb(0, 1, 1), colorsys.hsv_to_rgb(0.33, 1, 1))
-gold_palette = Palette(colorsys.hsv_to_rgb(20/255, 0.95, 1), colorsys.hsv_to_rgb(0, 0, 1), colorsys.hsv_to_rgb(0, 1, 1))
-gold_red_palette = Palette(colorsys.hsv_to_rgb(20/255, 0.95, 1), colorsys.hsv_to_rgb(0, 1, 1))
-palette = gold_palette
+
+C_BLACK = RGBColor(0, 0, 0)
+C_WHITE = RGBColor(1, 1, 1)
+C_RED = HSVColor(0, 1, 1)
+C_GOLD = HSVColor(15 / 255, 1, 1)
+C_ORANGE = HSVColor(0.04, 1, 1)
+C_YELLOW = HSVColor(0.08, 1, 1)
+C_GREEN = HSVColor(0.33, 1, 1)
+C_TEAL = HSVColor(0.37, 1, 1)
+C_TURQUOISE = HSVColor(0.45, 1, 1)
+C_BLUE_LIGHT = HSVColor(0.55, 1, 1)
+C_BLUE = HSVColor(0.65, 1, 1)
+C_BLUE_PURPLE = HSVColor(0.7, 1, 1)
+C_PURPLE = HSVColor(0.75, 1, 1)
+C_PURPLE_PINKY = HSVColor(0.85, 1, 1)
+C_PINK = HSVColor(0.95, 1, 1)
+
+
+test_color = C_TEAL
+test_color2 = C_GREEN
+# test_color3 = C_GREEN
+test_palette = Palette(test_color, test_color, C_WHITE)
+test_palette2 = Palette(test_color2, test_color2, C_WHITE)
+# test_palette3 = Palette(test_color3, test_color3)
+blue_purple_palette = Palette(C_BLUE, C_PURPLE_PINKY, colors.WHITE)
+blue_white_palette = Palette(C_BLUE, HSVColor(0.55, 0.6, 1), C_WHITE)
+christmas_palette = Palette(C_RED, C_GREEN, C_WHITE)
+gold_palette = Palette(C_GOLD, C_WHITE, C_RED)
+gold_red_palette = Palette(C_GOLD, C_RED, C_WHITE)
+red_gold_palette = Palette(C_RED, C_GOLD, C_WHITE)
+red_teal_palette = Palette(C_RED, C_TEAL, C_WHITE)
+DEFAULT_PALETTE = gold_palette
+
+smooth_wipe_transition = WipeTransitionFactory(softness=80, reverse=True)
 opensimplex.random_seed()
 
 control_panel = ControlPanel(num_pixels)\
     .add_pattern(BouncingBlocksPattern(num_pixels))\
     .add_pattern(GentleWithRainbowsPattern(num_pixels))\
     .add_pattern(Gentle2TonePattern(num_pixels))\
-    .add_pattern(SimpleStripesPattern(num_pixels, width=10).override_palette(christmas_palette), name='Candy Stripes')\
-    .add_pattern(SimpleStripesPattern(num_pixels, width=10))\
+    .add_pattern(SimpleStripesPattern(num_pixels, width=7, speed=14))\
     .add_pattern(WarpDrivePattern(num_pixels))\
-    .add_transition(WipeTransitionFactory(softness=80), name='Wipe smooth')\
-    .add_transition(WipeTransitionFactory(softness=1), name='Wipe sharp')
+    .add_transition(smooth_wipe_transition, name='Wipe smooth')\
+    .add_transition(WipeTransitionFactory(softness=1, reverse=True), name='Wipe sharp')\
+    .add_palette(gold_palette, 'Gold & White') \
+    .add_palette(red_gold_palette, 'Royal')\
+    .add_palette(christmas_palette, 'Candy Cane')\
+    .add_palette(red_teal_palette, 'Red & Teal')\
+    .add_palette(blue_purple_palette, 'Blue & Purple') \
+    .add_palette(blue_white_palette, 'Ice') \
+    .add_palette(Palette(C_BLUE, C_PURPLE, C_WHITE), 'Blue & Purple2')\
+    .set_transition(smooth_wipe_transition)\
+    .set_palette(DEFAULT_PALETTE)
 
 start_time = time.time()
 last_time = start_time
@@ -59,20 +98,13 @@ while control_panel.is_running():
     start_time += delta_t * (1 - night_time_dilation)
     delta_t *= night_time_dilation
 
-    control_panel.main_loop(t - start_time, delta_t, palette)
+    frame = control_panel.main_loop(t - start_time, delta_t, DEFAULT_PALETTE)
     last_time = t
 
-    frame = control_panel.get_frame()
-
-    for x in range(num_pixels):
-        frame[x] = (
-            frame[x][0] * BRIGHTNESS * night_brightness,
-            frame[x][1] * BRIGHTNESS * night_brightness,
-            frame[x][2] * BRIGHTNESS * night_brightness
-        )
+    frame = [frame[i].dim(BRIGHTNESS * night_brightness) for i in range(num_pixels)]
 
     if not PREVIEW_ONLY:
-        lights.pixels = [rgb_to_bytes(x) for x in frame]
+        lights.pixels = [color.get_bytes() for color in frame]
         lights.show()
 
     time.sleep(control_panel.get_delay_s())
