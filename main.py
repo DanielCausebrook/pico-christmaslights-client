@@ -7,10 +7,14 @@ import colors
 from colors import HSVColor, RGBColor, Color
 from control_panel import ControlPanel
 from palette import Palette
+from pattern_layered import LayeredPattern
 from patterns.bouncing_blocks import BouncingBlocksPattern
+from patterns.bubble_sort import BubbleSortPattern
 from patterns.simple_stripes import SimpleStripesPattern
 from patterns.gentle_2tone import Gentle2TonePattern
 from patterns.gentle_with_rainbows import GentleWithRainbowsPattern
+from patterns.sparkle_comets import SparkleCometPattern
+from patterns.sparkles import Sparkles
 from patterns.warp_drive import WarpDrivePattern
 from pico_client import *
 from mathfun import smoothstep
@@ -52,10 +56,14 @@ gold_palette = Palette(C_GOLD, C_WHITE, C_RED)
 gold_red_palette = Palette(C_GOLD, C_RED, C_WHITE)
 red_gold_palette = Palette(C_RED, C_GOLD, C_WHITE)
 red_teal_palette = Palette(C_RED, C_TEAL, C_WHITE)
-DEFAULT_PALETTE = gold_palette
+DEFAULT_PALETTE = red_teal_palette
 
 smooth_wipe_transition = WipeTransitionFactory(softness=80, reverse=True)
 opensimplex.random_seed()
+
+gentle_with_rainbows_and_sparkles = LayeredPattern(num_pixels)
+gentle_with_rainbows_and_sparkles.add_layer(GentleWithRainbowsPattern(num_pixels))
+gentle_with_rainbows_and_sparkles.add_layer(Sparkles(num_pixels, 0.8, 3))
 
 control_panel = ControlPanel(num_pixels)\
     .add_pattern(BouncingBlocksPattern(num_pixels))\
@@ -63,6 +71,10 @@ control_panel = ControlPanel(num_pixels)\
     .add_pattern(Gentle2TonePattern(num_pixels))\
     .add_pattern(SimpleStripesPattern(num_pixels, width=7, speed=14))\
     .add_pattern(WarpDrivePattern(num_pixels))\
+    .add_pattern(Sparkles(num_pixels, 1, 3))\
+    .add_pattern(SparkleCometPattern(num_pixels))\
+    .add_pattern(BubbleSortPattern(num_pixels))\
+    .add_pattern(gentle_with_rainbows_and_sparkles, name='Rainbows & Sparkles')\
     .add_transition(smooth_wipe_transition, name='Wipe smooth')\
     .add_transition(WipeTransitionFactory(softness=1, reverse=True), name='Wipe sharp')\
     .add_palette(gold_palette, 'Gold & White') \
@@ -89,6 +101,8 @@ while control_panel.is_running():
     )
     day_proportion = microseconds_today / 86_400_000_000
     night_adjustment = smoothstep(8/24, 8.5/24, day_proportion) - smoothstep(22.5/23, 1, day_proportion)
+    # night_adjustment = smoothstep(15.5/24, 16/24, day_proportion) - smoothstep(22.5/23, 1, day_proportion)
+    # night_adjustment = 1
     night_brightness = 0.04 + 0.96 * night_adjustment
     night_time_dilation = 0.5 + 0.5 * night_adjustment
 

@@ -19,7 +19,7 @@ from transitions.fade import FadeTransitionFactory
 
 pygame.init()
 display_width = 720
-display_height = 360
+display_height = 400
 display_padding = 20
 leds_y = display_padding + 5
 big_buttons_x = display_padding + 10

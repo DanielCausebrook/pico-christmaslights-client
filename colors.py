@@ -45,7 +45,11 @@ class Color(ABC):
         pass
 
     @abstractmethod
-    def add_alpha(self, alpha: float = 1) -> AlphaColor:
+    def get_alpha(self) -> float:
+        pass
+
+    @abstractmethod
+    def set_alpha(self, alpha: float) -> Color:
         pass
 
     @abstractmethod
@@ -56,35 +60,31 @@ class Color(ABC):
     def interp(self, other: Color, amount: float) -> Color:
         pass
 
-    def screen_with(self, color: AlphaColor) -> Color:
-        return self.interp(color, color.get_alpha())
+    def rover(self, color: Color) -> Color:
+        color = color.get_rgb()
+        c1 = color.get_rgb()
+        r1 = rgb_component_to_linear(c1.r)
+        g1 = rgb_component_to_linear(c1.g)
+        b1 = rgb_component_to_linear(c1.b)
+        c2 = self.get_rgb()
+        r2 = rgb_component_to_linear(c2.r)
+        g2 = rgb_component_to_linear(c2.g)
+        b2 = rgb_component_to_linear(c2.b)
+        aO = c1.a + c2.a * (1 - c1.a)
+
+        if aO == 0:
+            return BLACK.set_alpha(0)
+
+        return RGBColor(
+            rgb_component_from_linear((r1 * c1.a + r2 * c2.a * (1 - c1.a))/aO),
+            rgb_component_from_linear((g1 * c1.a + g2 * c2.a * (1 - c1.a))/aO),
+            rgb_component_from_linear((b1 * c1.a + b2 * c2.a * (1 - c1.a))/aO),
+            aO
+        )
 
     def get_bytes(self) -> Tuple[int, int, int]:
-        rgb = self.get_rgb()
+        rgb = BLACK.rover(self).get_rgb()
         return round(rgb.r * 255), round(rgb.g * 255), round(rgb.b * 255)
-
-
-@dataclass(frozen=True)
-class AlphaColor(Color, ABC):
-
-    @abstractmethod
-    def get_alpha(self) -> float:
-        pass
-
-    @abstractmethod
-    def get_rgba(self) -> RGBAColor:
-        pass
-
-    @abstractmethod
-    def get_hsva(self) -> HSVAColor:
-        pass
-
-    @abstractmethod
-    def drop_alpha(self) -> Color:
-        pass
-
-    def screen_with(self, color: AlphaColor) -> AlphaColor:
-        raise "I don't know how to screen a ColorA with a ColorA yet, sorry!"
 
 
 @dataclass(frozen=True)
@@ -92,62 +92,53 @@ class RGBColor(Color):
     r: float
     g: float
     b: float
+    a: float = 1.0
 
     def get_rgb(self) -> RGBColor:
         return self
 
     def get_hsv(self) -> HSVColor:
-        return HSVColor(*colorsys.rgb_to_hsv(self.r, self.g, self.b))
-
-    def add_alpha(self, alpha: float = 1) -> RGBAColor:
-        return RGBAColor(self.r, self.g, self.b, alpha)
-
-    def dim(self, brightness: float) -> RGBColor:
-        return BLACK.interp(self, brightness)
-
-    def interp(self, other: Color, amount: float) -> RGBColor:
-        other = other.get_rgb()
-        return RGBColor(*rgb_interp((self.r, self.g, self.b), (other.r, other.g, other.b), amount))
-
-@dataclass(frozen=True)
-class RGBAColor(RGBColor, AlphaColor):
-    r: float
-    g: float
-    b: float
-    a: float
+        return HSVColor(*colorsys.rgb_to_hsv(self.r, self.g, self.b), self.a)
 
     def get_alpha(self) -> float:
         return self.a
 
-    def get_rgb(self) -> RGBColor:
-        return RGBColor(*rgb_interp((0, 0, 0), (self.r, self.g, self.b), self.a))
+    def set_alpha(self, alpha: float) -> RGBColor:
+        return RGBColor(self.r, self.g, self.b, alpha)
 
-    def get_hsv(self) -> HSVColor:
-        return self.get_rgb().get_hsv()
+    def dim(self, brightness: float) -> RGBColor:
+        return BLACK.interp(self, brightness).set_alpha(self.a)
 
-    def get_rgba(self) -> RGBAColor:
-        return self
+    def interp(self, other: Color, amount: float) -> RGBColor:
+        if amount >= 1:
+            return other.get_rgb()
+        elif amount <= 0:
+            return self
+        other = other.get_rgb()
+        alpha = (1 - amount) * self.a + amount * other.get_alpha()
+        return RGBColor(*rgb_interp((self.r, self.g, self.b), (other.r, other.g, other.b), amount), alpha)
 
-    def get_hsva(self) -> HSVAColor:
-        return HSVAColor(*colorsys.rgb_to_hsv(self.r, self.g, self.b), self.a)
-
-    def drop_alpha(self) -> Color:
-        return RGBColor(self.r, self.g, self.b)
+    def __str__(self):
+        return "RGB(" + str(self.r) + ", " + str(self.g) + ", " + str(self.b) + (", " + str(self.a) if self.a != 1 else "") + ")"
 
 @dataclass(frozen=True)
 class HSVColor(Color):
     h: float
     s: float
     v: float
+    a: float = 1.0
 
     def get_rgb(self) -> RGBColor:
-        return RGBColor(*colorsys.hsv_to_rgb(self.h, self.s, self.v))
+        return RGBColor(*colorsys.hsv_to_rgb(self.h, self.s, self.v), self.a)
 
     def get_hsv(self) -> HSVColor:
         return self
 
-    def add_alpha(self, alpha: float = 1) -> HSVAColor:
-        return HSVAColor(self.h, self.s, self.v, alpha)
+    def get_alpha(self) -> float:
+        return self.a
+
+    def set_alpha(self, alpha: float) -> HSVColor:
+        return HSVColor(self.h, self.s, self.v, alpha)
 
     def dim(self, brightness: float) -> HSVColor:
         return self.get_rgb().dim(brightness).get_hsv()
@@ -155,30 +146,8 @@ class HSVColor(Color):
     def interp(self, other: Color, amount: float) -> HSVColor:
         return self.get_rgb().interp(other, amount).get_hsv()
 
-@dataclass(frozen=True)
-class HSVAColor(HSVColor, AlphaColor):
-    h: float
-    s: float
-    v: float
-    a: float
-
-    def get_alpha(self) -> float:
-        return self.a
-
-    def get_rgb(self) -> RGBColor:
-        return RGBColor(*rgb_interp((0, 0, 0), colorsys.hsv_to_rgb(self.h, self.s, self.v), self.a))
-
-    def get_hsv(self) -> HSVColor:
-        return self.get_rgb().get_hsv()
-
-    def get_rgba(self) -> RGBAColor:
-        return RGBAColor(*colorsys.hsv_to_rgb(self.h, self.s, self.v), self.a)
-
-    def get_hsva(self) -> HSVAColor:
-        return self
-
-    def drop_alpha(self) -> Color:
-        return HSVColor(self.h, self.s, self.v)
+    def __str__(self):
+        return "HSV(" + str(self.h) + ", " + str(self.s) + ", " + str(self.v) + (", " + str(self.a) if self.a != 1 else "") + ")"
 
 BLACK = RGBColor(0, 0, 0)
 WHITE = RGBColor(1, 1, 1)

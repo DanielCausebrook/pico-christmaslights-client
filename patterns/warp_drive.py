@@ -1,34 +1,45 @@
-import dataclasses
 import math
 import random
 from typing import List
 
 import colors
-from colors import HSVColor, HSVAColor
+from colors import HSVColor
 from pattern import LightPattern
 from mathfun import smoothstep
 from palette import Palette
 
 
 class WarpDrivePattern(LightPattern):
-    particle_positions: List[float] = []
-    particle_vels: List[float] = []
-    pixels_hsv: List[HSVColor] = []
-    particle2_positions: List[float] = []
-    particle2_vels: List[float] = []
-    pixels2_hsva: List[HSVAColor] = []
-    next_particle2_left_in: float = random.uniform(0, 1.5)
-    next_particle2_right_in: float = random.uniform(0, 1.5)
-    center_glow2_amount: float = 0
-    center: float = 80
-    radius: float = 200 - 80
+    particle_positions: List[float]
+    particle_vels: List[float]
+    pixels_hsv: List[HSVColor]
+    particle2_positions: List[float]
+    particle2_vels: List[float]
+    pixels2_hsva: List[HSVColor]
+    next_particle2_left_in: float
+    next_particle2_right_in: float
+    center_glow2_amount: float
+    center: float
+    radius: float
 
     def __init__(self, num_pixels: int):
         super().__init__(num_pixels)
 
+        self.particle_positions = []
+        self.particle_vels = []
+        self.pixels_hsv = []
+        self.particle2_positions = []
+        self.particle2_vels = []
+        self.pixels2_hsva = []
+        self.next_particle2_left_in = random.uniform(0, 1.5)
+        self.next_particle2_right_in = random.uniform(0, 1.5)
+        self.center_glow2_amount = 0
+        self.center = 80
+        self.radius = 200 - 80
+
         for i in range(num_pixels):
             self.pixels_hsv.append(colors.BLACK.get_hsv())
-            self.pixels2_hsva.append(colors.BLACK.add_alpha().get_hsva())
+            self.pixels2_hsva.append(colors.BLACK.get_hsv())
 
     def __get_pos_modifier(self, pos: float):
         return abs((self.center - pos) / self.radius)
@@ -56,7 +67,7 @@ class WarpDrivePattern(LightPattern):
             c = self.pixels_hsv[i]
             self.pixels_hsv[i] = HSVColor(c.h, c.s, c.v - c.v * decay)
             c2 = self.pixels2_hsva[i]
-            self.pixels2_hsva[i] = HSVAColor(c2.h, c2.s, c2.v, c2.a - c2.a * decay)
+            self.pixels2_hsva[i] = HSVColor(c2.h, c2.s, c2.v, c2.a - c2.a * decay)
 
         self.center_glow2_amount -= self.center_glow2_amount * 2 * delta_t
         self.center_glow2_amount = max(self.center_glow2_amount, smoothstep(-0.6, 0, -min(self.next_particle2_left_in, self.next_particle2_right_in)))
@@ -93,7 +104,7 @@ class WarpDrivePattern(LightPattern):
             for j in r:
                 if 0 <= j < self.num_pixels:
                     self.pixels2_hsva[j] = palette.secondary.get_hsv()\
-                        .add_alpha((1 + smoothstep(self.center + 0, self.center + 10, j) - smoothstep(self.center - 10, self.center - 0, j)))
+                        .set_alpha((1 + smoothstep(self.center + 0, self.center + 10, j) - smoothstep(self.center - 10, self.center - 0, j)))
 
             self.particle2_positions[i] += delta_x
             if not 0 <= pos < self.num_pixels:
@@ -106,5 +117,5 @@ class WarpDrivePattern(LightPattern):
             center_glow = (1 + smoothstep(self.center + 0, self.center + 8, i) - smoothstep(self.center - 8, self.center - 0, i))
 
             self.set_pixel(i,
-                self.pixels_hsv[i].interp(glow_rgb, 0.6 * (1 - center_glow)).screen_with(self.pixels2_hsva[i])
+                self.pixels_hsv[i].interp(glow_rgb, 0.6 * (1 - center_glow)).rover(self.pixels2_hsva[i])
             )

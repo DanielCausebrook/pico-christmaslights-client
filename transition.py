@@ -1,3 +1,4 @@
+import copy
 from typing import List
 
 from colors import Color
@@ -16,7 +17,7 @@ class Transition(LightPattern):
     pattern1: LightPattern
     pattern2: LightPattern
     duration_s: float
-    progress: float = 0
+    progress: float
 
     def __init__(self, num_pixels: int, pattern1: LightPattern, pattern2: LightPattern, duration_s: float):
         super().__init__(num_pixels)
@@ -24,6 +25,7 @@ class Transition(LightPattern):
         self.pattern1 = pattern1
         self.pattern2 = pattern2
         self.duration_s = duration_s
+        self.progress = 0
 
     def get_progress(self) -> float:
         return self.progress
@@ -62,4 +64,4 @@ class Transition(LightPattern):
                 self.do_main_loop(t, delta_t, palette)
                 self.last_t = t
 
-        return self.pixels
+        return copy.copy(self.pixels)

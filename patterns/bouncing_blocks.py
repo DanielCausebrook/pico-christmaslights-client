@@ -3,6 +3,7 @@ import random
 
 import colors
 from colors import HSVColor
+from effects.persistence import PersistenceEffect
 from pattern import LightPattern
 import numpy as np
 
@@ -28,7 +29,9 @@ class BouncingBlocksPattern(LightPattern):
             self.carHues[c] = random.uniform(0, 1)
             self.carSizes[c] = random.randint(1, 5)
 
-        self.gentle_bg = Gentle2TonePattern(num_pixels, speed=0.5, gradient_width=0.4, seed=seed_bg)
+        # self.gentle_bg = Gentle2TonePattern(num_pixels, speed=0.5, gradient_width=0.4, seed=seed_bg)
+
+        self.add_effect(PersistenceEffect(num_pixels, 3))
 
     def get_name(self):
         return 'Bouncing Blocks'
@@ -36,8 +39,8 @@ class BouncingBlocksPattern(LightPattern):
     def do_main_loop(self, t: float, delta_t: float, palette: Palette):
         self.clear()
 
-        bg_palette = Palette(palette.primary.dim(0.6), palette.secondary.dim(0.6), palette.accent)
-        self.pixels = self.gentle_bg.main_loop(t, delta_t, bg_palette)
+        # bg_palette = Palette(palette.primary.dim(0.6), palette.secondary.dim(0.6), palette.accent)
+        # self.pixels = self.gentle_bg.main_loop(t, delta_t, bg_palette)
 
         for i in range(self.numCars):
             self.carPos[i] += delta_t * self.carVels[i]

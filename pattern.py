@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import copy
 from typing import Optional, List
 
 import colors
 from colors import Color
+from effect import Effect
 from palette import Palette
 
 
@@ -13,14 +15,18 @@ def rgb_to_bytes(rgb):
 
 
 class LightPattern:
-    pixels: List[Color]
     num_pixels: int
-    palette_override: Optional[Palette] = None
-    last_t: float = None
+    pixels: List[Color]
+    effects: List[Effect]
+    palette_override: Optional[Palette]
+    last_t: Optional[float]
 
     def __init__(self, num_pixels: int):
         self.num_pixels = num_pixels
         self.pixels = [colors.BLACK for _ in range(num_pixels)]
+        self.effects = []
+        self.palette_override = None
+        self.last_t = None
 
     def get_name(self):
         return type(self).__name__
@@ -28,6 +34,9 @@ class LightPattern:
     def override_palette(self, palette: Optional[Palette]) -> LightPattern:
         self.palette_override = palette
         return self
+
+    def add_effect(self, effect: Effect):
+        self.effects.append(effect)
 
     def unwrap(self) -> LightPattern:
         """
@@ -46,7 +55,7 @@ class LightPattern:
 
         Remember to call show() to send all pixel values to the lights.
         """
-        self.pixels = [colors.BLACK for _ in range(self.num_pixels)]
+        self.pixels = [colors.BLACK.set_alpha(0) for _ in range(self.num_pixels)]
 
     def set_pixel(self, pixel: int, color: Color):
         """
@@ -64,16 +73,15 @@ class LightPattern:
         :param Palette palette:
         :param float t:
         """
-        if self.last_t is None:
-            self.do_main_loop(t, delta_t, palette if self.palette_override is None else self.palette_override)
-            self.last_t = t
-        elif self.last_t == t:
+        if self.last_t == t:
             pass
         else:
             self.do_main_loop(t, delta_t, palette if self.palette_override is None else self.palette_override)
+            for effect in self.effects:
+                self.pixels = effect.apply_main_loop(self.pixels, t, delta_t)
             self.last_t = t
 
-        return self.get_frame()
+        return copy.copy(self.pixels)
 
     def do_main_loop(self, t: float, delta_t: float, palette: Palette) -> None:
         """
@@ -87,6 +95,5 @@ class LightPattern:
     def get_delay_s(self) -> float:
         return 0.02
 
-    def get_frame(self) -> List[Color]:
-        return self.pixels
+
 
